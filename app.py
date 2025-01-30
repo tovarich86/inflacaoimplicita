@@ -23,14 +23,15 @@ df = load_treasury_data()
 # Interface no Streamlit
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
-# Seleção da data base e vencimento
-data_base_options = df["Data Base"].dt.strftime("%d/%m/%Y").unique()
-data_base_input = st.selectbox("📅 Selecione a Data Base:", data_base_options)
+# Seleção da data base com calendário até a última data disponível
+min_date = df["Data Base"].min()
+max_date = df["Data Base"].max()
 
+data_base_input = st.date_input("📅 Selecione a Data Base:", max_value=max_date, min_value=min_date, value=max_date)
 vencimento_input = st.date_input("📅 Escolha o vencimento desejado:")
 
-# Converter a entrada para datetime
-data_base_input = pd.to_datetime(data_base_input, format="%d/%m/%Y")
+# Converter entrada para datetime
+data_base_input = pd.to_datetime(data_base_input)
 vencimento_input_num = int(vencimento_input.strftime("%Y%m%d"))
 
 # Filtrar os títulos apenas para a data base inserida
@@ -84,29 +85,44 @@ df_prefixado["Taxa Prefixado"] = df_prefixado["Taxa Compra Manha"]
 df_prefixado["Título IPCA"] = "Tesouro IPCA+"
 df_prefixado["Taxa IPCA Interpolada"] = taxa_ipca_interpolada
 
-# Ajustar formato de datas para DD/MM/YYYY
+# Ajustar formato de datas para DD/MM/YYYY e números para PT-BR
 df_prefixado["Data Base"] = df_prefixado["Data Base"].dt.strftime("%d/%m/%Y")
 df_prefixado["Data Vencimento"] = df_prefixado["Data Vencimento"].dt.strftime("%d/%m/%Y")
 df_prefixado["Vencimento Mais Próximo"] = df_prefixado["Vencimento Mais Próximo"].dt.strftime("%d/%m/%Y")
 
-# Selecionar colunas para exibição
+# Formatar números PT-BR
 df_resultado = df_prefixado[[
     'Data Base', 'Título Prefixado', 'Data Vencimento', 'Taxa Prefixado',
     'Título IPCA', 'Vencimento Mais Próximo', 'Taxa IPCA Correspondente', 'Inflação Implícita',
     'Taxa IPCA Interpolada', 'Inflação Implícita Interpolada'
-]]
+]].copy()
+df_resultado = df_resultado.style.format({
+    "Taxa Prefixado": "{:.2f}",
+    "Taxa IPCA Correspondente": "{:.2f}",
+    "Inflação Implícita": "{:.2f}",
+    "Taxa IPCA Interpolada": "{:.2f}",
+    "Inflação Implícita Interpolada": "{:.2f}"
+}, decimal=",", thousands=".")
 
 # Exibir tabela no Streamlit
 st.subheader("📊 Resultado do Cálculo")
 st.dataframe(df_resultado)
 
-# Criar CSV para download com todas as colunas originais
+# Criar CSV para download contendo apenas os títulos utilizados
 csv_auditoria = df_filtered[df_filtered["Data Vencimento"].isin(df_prefixado["Data Vencimento"])]
-csv_auditoria = csv_auditoria.to_csv(index=False, sep=";", decimal=",")
+csv_auditoria = csv_auditoria.to_csv(index=False, sep=";", decimal=".")
 
-# Botão para download do CSV
+# Botão para download do CSV final
 st.download_button(
-    label="📥 Baixar CSV Completo (Auditoria)",
+    label="📥 Baixar Resultado",
+    data=df_prefixado.to_csv(index=False, sep=";", decimal="."),
+    file_name="resultado_inflacao.csv",
+    mime="text/csv"
+)
+
+# Botão para download do CSV de auditoria
+st.download_button(
+    label="📥 Baixar CSV Auditoria",
     data=csv_auditoria,
     file_name="dados_auditoria.csv",
     mime="text/csv"
