@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 from scipy.spatial import cKDTree
 import matplotlib.pyplot as plt
 
-# Criar a imagem com a fórmula da Inflação Implícita
+# Criar a imagem da fórmula da Inflação Implícita na memória
 def generate_formula_image():
     fig, ax = plt.subplots(figsize=(8, 3))
     ax.text(0.5, 0.5, 
@@ -18,14 +18,15 @@ def generate_formula_image():
     ax.set_yticks([])
     ax.set_frame_on(False)
 
-    # Salvar a imagem em um buffer
-    img_path = "/mnt/data/inflacao_implicita_formula.png"
-    plt.savefig(img_path, dpi=300, bbox_inches='tight', transparent=True)
+    # Salvar a imagem em um buffer de memória
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight', transparent=True)
     plt.close(fig)
-    return img_path
+    img_buffer.seek(0)  # Retorna ao início do buffer para leitura
+    return img_buffer
 
 # Gerar a imagem da fórmula
-formula_image_path = generate_formula_image()
+formula_image_buffer = generate_formula_image()
 
 # URL do CSV original do Tesouro Nacional
 CSV_URL = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
