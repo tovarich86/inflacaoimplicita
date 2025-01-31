@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
-from io import StringIO
+from io import BytesIO, StringIO
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.spatial import cKDTree
@@ -126,13 +126,14 @@ df_resultado.rename(columns={
 }, inplace=True)
 
 # Criar arquivo Excel para download
-@st.cache_data(ttl=0)
 def convert_df_to_excel(df):
-    output = StringIO()
+    output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Resultado")
-    return output.getvalue()
+    output.seek(0)  # Retorna ao início do buffer para leitura correta
+    return output
 
+# Criar arquivo Excel para download
 excel_data = convert_df_to_excel(df_resultado)
 
 # Exibir tabela no Streamlit
