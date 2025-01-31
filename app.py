@@ -9,15 +9,15 @@ from scipy.spatial import cKDTree
 # Interface no Streamlit
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
-# 📌 **Fórmula da Inflação Implícita**
-st.markdown(r"""
+st.markdown("""
 ## 📊 Fórmula da Inflação Implícita
 
 A **Inflação Implícita** é calculada conforme a seguinte equação:
+""")
 
-\[
+st.latex(r"""
 \text{Inflação Implícita} = \left( \frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}} \right) - 1
-\]
+""")
 
 """, unsafe_allow_html=True)
 
