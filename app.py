@@ -102,6 +102,11 @@ df_prefixado["Vencimento Mais Próximo"], df_prefixado["Taxa IPCA Correspondente
 df_prefixado["Inflação Implícita"] = ((1 + df_prefixado["Taxa Compra Manha"] / 100) /
                                       (1 + df_prefixado["Taxa IPCA Correspondente"] / 100) - 1) * 100
 
+# 📌 Formatando a Data Base e adicionando o Vencimento Desejado
+df_resultado["Data Base"] = df_resultado["Data Base"].dt.strftime("%d/%m/%Y")
+df_resultado["Vencimento Desejado"] = vencimento_input.strftime("%d/%m/%Y")
+
+
 # Criar DataFrame final
 df_resultado = df_prefixado[[
     "Data Base", "Tipo Titulo", "Data Vencimento", "Taxa Compra Manha", 
@@ -112,6 +117,13 @@ df_resultado.rename(columns={
     "Tipo Titulo": "Tipo Título",
     "Taxa Compra Manha": "Taxa Prefixada Correspondente"
 }, inplace=True)
+
+# Reorganizar as colunas para melhor visualização
+df_resultado = df_resultado[[
+    "Data Base", "Tipo Título", "Data Vencimento", "Vencimento Desejado",
+    "Taxa Prefixada Correspondente", "Vencimento Mais Próximo", 
+    "Taxa IPCA Correspondente", "Inflação Implícita"
+]]
 
 # Criar arquivo Excel para download
 def convert_df_to_excel(df):
