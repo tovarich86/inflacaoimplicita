@@ -9,15 +9,13 @@ from scipy.spatial import cKDTree
 # Interface no Streamlit
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
-st.markdown("""
+# 📌 Fórmula da Inflação Implícita (MathJax para melhor exibição)
+st.markdown(r"""
 
-
-A **Inflação Implícita** é calculada conforme a seguinte equação:
-""")
-
-st.latex(r"""
+\[
 \text{Inflação Implícita} = \left( \frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}} \right) - 1
-""")
+\]
+""", unsafe_allow_html=True)
 
 # URL do CSV original do Tesouro Nacional
 CSV_URL = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
@@ -103,27 +101,22 @@ df_prefixado["Inflação Implícita"] = ((1 + df_prefixado["Taxa Compra Manha"] 
                                       (1 + df_prefixado["Taxa IPCA Correspondente"] / 100) - 1) * 100
 
 # 📌 Formatando a Data Base e adicionando o Vencimento Desejado
-df_resultado["Data Base"] = df_resultado["Data Base"].dt.strftime("%d/%m/%Y")
-df_resultado["Vencimento Desejado"] = vencimento_input.strftime("%d/%m/%Y")
-
+df_prefixado["Data Base"] = df_prefixado["Data Base"].dt.strftime("%d/%m/%Y")
+df_prefixado["Vencimento Desejado"] = vencimento_input.strftime("%d/%m/%Y")
+df_prefixado["Data Vencimento"] = df_prefixado["Data Vencimento"].dt.strftime("%d/%m/%Y")
+df_prefixado["Vencimento Mais Próximo"] = df_prefixado["Vencimento Mais Próximo"].dt.strftime("%d/%m/%Y")
 
 # Criar DataFrame final
 df_resultado = df_prefixado[[
-    "Data Base", "Tipo Titulo", "Data Vencimento", "Taxa Compra Manha", 
-    "Vencimento Mais Próximo", "Taxa IPCA Correspondente", "Inflação Implícita"
+    "Data Base", "Tipo Titulo", "Data Vencimento", "Vencimento Desejado",
+    "Taxa Compra Manha", "Vencimento Mais Próximo", 
+    "Taxa IPCA Correspondente", "Inflação Implícita"
 ]].copy()
 
 df_resultado.rename(columns={
     "Tipo Titulo": "Tipo Título",
     "Taxa Compra Manha": "Taxa Prefixada Correspondente"
 }, inplace=True)
-
-# Reorganizar as colunas para melhor visualização
-df_resultado = df_resultado[[
-    "Data Base", "Tipo Título", "Data Vencimento", "Vencimento Desejado",
-    "Taxa Prefixada Correspondente", "Vencimento Mais Próximo", 
-    "Taxa IPCA Correspondente", "Inflação Implícita"
-]]
 
 # Criar arquivo Excel para download
 def convert_df_to_excel(df):
