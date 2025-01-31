@@ -10,12 +10,9 @@ from scipy.spatial import cKDTree
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
 # 📌 Fórmula da Inflação Implícita (MathJax para melhor exibição)
-st.markdown(r"""
-
-\[
+st.latex(r"""
 \text{Inflação Implícita} = \left( \frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}} \right) - 1
-\]
-""", unsafe_allow_html=True)
+""")
 
 # URL do CSV original do Tesouro Nacional
 CSV_URL = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
