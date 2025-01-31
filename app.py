@@ -10,7 +10,7 @@ from scipy.spatial import cKDTree
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
 st.markdown("""
-## 📊 Fórmula da Inflação Implícita
+
 
 A **Inflação Implícita** é calculada conforme a seguinte equação:
 """)
