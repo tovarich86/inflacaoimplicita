@@ -28,6 +28,12 @@ def generate_formula_image():
 # Gerar a imagem da fórmula
 formula_image_buffer = generate_formula_image()
 
+# Interface no Streamlit
+st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
+
+# **🔹 Exibir a imagem corretamente no Streamlit**
+st.image(formula_image_buffer, caption="Fórmula do Cálculo da Inflação Implícita", use_column_width=True)
+
 # URL do CSV original do Tesouro Nacional
 CSV_URL = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
 
