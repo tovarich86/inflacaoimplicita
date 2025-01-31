@@ -10,11 +10,15 @@ from scipy.spatial import cKDTree
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
 # 📌 **Fórmula da Inflação Implícita**
-st.markdown("""
-### 🧮 Fórmula da Inflação Implícita:
+st.markdown(r"""
+## 📊 Fórmula da Inflação Implícita
+
+A **Inflação Implícita** é calculada conforme a seguinte equação:
+
 \[
 \text{Inflação Implícita} = \left( \frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}} \right) - 1
 \]
+
 """, unsafe_allow_html=True)
 
 # URL do CSV original do Tesouro Nacional
