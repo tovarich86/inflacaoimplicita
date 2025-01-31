@@ -6,7 +6,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.spatial import cKDTree
 
-# Função para carregar os dados do Tesouro Direto
+# Função para carregar os dados do Tesouro Direto (Cache apenas no carregamento inicial)
 @st.cache_data
 def load_treasury_data():
     url = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
@@ -34,8 +34,12 @@ vencimento_input = st.date_input("📅 Escolha o vencimento desejado:")
 data_base_input = pd.to_datetime(data_base_input)
 vencimento_input_num = int(vencimento_input.strftime("%Y%m%d"))
 
-# Filtrar os títulos apenas para a data base inserida
-df_filtered = df[df["Data Base"] == data_base_input]
+# 🔄 Sempre atualizar os dados quando a Data Base for alterada
+@st.cache_data(ttl=0)  # 🔄 Sempre recarregar os dados quando a entrada mudar
+def filter_data(df, data_base_input):
+    return df[df["Data Base"] == data_base_input].copy()
+
+df_filtered = filter_data(df, data_base_input)
 
 # Verificar se há títulos disponíveis para a data selecionada
 if df_filtered.empty:
@@ -43,15 +47,17 @@ if df_filtered.empty:
     st.stop()
 
 # Separar títulos prefixados e IPCA+
-df_prefixado = df_filtered[df_filtered["Tipo Titulo"].str.contains("Prefixado") & ~df_filtered["Tipo Titulo"].str.contains("Juros Semestrais")].copy()
-df_ipca = df_filtered[df_filtered["Tipo Titulo"].str.contains("Tesouro IPCA+$", regex=True)].copy()  # Apenas Tesouro IPCA+ sem juros semestrais
+df_prefixado = df_filtered[df_filtered["Tipo Titulo"].str.contains("Prefixado", case=False, na=False) & 
+                           ~df_filtered["Tipo Titulo"].str.contains("Juros Semestrais", case=False, na=False)].copy()
+
+df_ipca = df_filtered[df_filtered["Tipo Titulo"].str.contains("Tesouro IPCA\\+$", regex=True, case=False, na=False)].copy()  # Apenas Tesouro IPCA+ sem juros semestrais
 
 # Verificar se há títulos prefixados disponíveis
 if df_prefixado.empty:
     st.warning("⚠️ Nenhum título Prefixado disponível para essa Data Base.")
     st.stop()
 
-# Verificar se há títulos IPCA disponíveis
+# Verificar se há títulos IPCA disponíveis corretamente
 if df_ipca.empty:
     st.warning("⚠️ Nenhum título Tesouro IPCA+ disponível para essa Data Base.")
     st.stop()
