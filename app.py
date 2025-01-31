@@ -6,7 +6,24 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.spatial import cKDTree
 
-# Função para carregar os dados do Tesouro Direto (Cache apenas no carregamento inicial)
+# Explicação do cálculo
+st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
+st.markdown("""
+### Como a Inflação Implícita é Calculada?
+A **Inflação Implícita** representa a expectativa de inflação embutida na diferença entre as taxas de juros do **Tesouro Prefixado** e do **Tesouro IPCA+**.
+
+A fórmula utilizada é:
+
+\[
+\text{Inflação Implícita} = \left(\frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}}\right) - 1
+\]
+
+Essa inflação reflete a **expectativa de inflação futura** entre a **data base** e a **data de vencimento do título**.
+
+A **Inflação Interpolada** é calculada para estimar a inflação implícita **até o vencimento desejado pelo usuário**.
+""")
+
+# Função para carregar os dados do Tesouro Direto
 @st.cache_data
 def load_treasury_data():
     url = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
@@ -20,9 +37,6 @@ def load_treasury_data():
 # Carregar os dados
 df = load_treasury_data()
 
-# Interface no Streamlit
-st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
-
 # Seleção da data base com calendário até a última data disponível
 min_date = df["Data Base"].min()
 max_date = df["Data Base"].max()
@@ -34,8 +48,8 @@ vencimento_input = st.date_input("📅 Escolha o vencimento desejado:")
 data_base_input = pd.to_datetime(data_base_input)
 vencimento_input_num = int(vencimento_input.strftime("%Y%m%d"))
 
-# 🔄 Sempre atualizar os dados quando a Data Base for alterada
-@st.cache_data(ttl=0)  # 🔄 Sempre recarregar os dados quando a entrada mudar
+# 🔄 Atualizar os dados dinamicamente
+@st.cache_data(ttl=0)
 def filter_data(df, data_base_input):
     return df[df["Data Base"] == data_base_input].copy()
 
@@ -83,44 +97,52 @@ def find_nearest_vencimento(vencimento_num):
     return df_ipca_sorted.iloc[idx[0]]["Data Vencimento"], df_ipca_sorted.iloc[idx[0]]["Taxa Compra Manha"]
 
 # Aplicar busca do título IPCA+ mais próximo
-try:
-    df_prefixado["Vencimento Mais Próximo"], df_prefixado["Taxa IPCA Correspondente"] = zip(
-        *df_prefixado["Vencimento_Num"].apply(find_nearest_vencimento)
-    )
-except ValueError:
-    st.error("❌ Erro ao encontrar o título IPCA+ mais próximo. Tente outra Data Base.")
-    st.stop()
+df_prefixado["Vencimento Mais Próximo"], df_prefixado["Taxa IPCA Correspondente"] = zip(
+    *df_prefixado["Vencimento_Num"].apply(find_nearest_vencimento)
+)
 
 # Calcular a inflação implícita original
 df_prefixado["Inflação Implícita"] = ((1 + df_prefixado["Taxa Compra Manha"] / 100) /
                                       (1 + df_prefixado["Taxa IPCA Correspondente"] / 100) - 1) * 100
 
-# Ajustar formato de datas e números para PT-BR
-df_prefixado["Data Base"] = df_prefixado["Data Base"].dt.strftime("%d/%m/%Y")
-df_prefixado["Data Vencimento"] = df_prefixado["Data Vencimento"].dt.strftime("%d/%m/%Y")
-df_prefixado["Vencimento Mais Próximo"] = df_prefixado["Vencimento Mais Próximo"].dt.strftime("%d/%m/%Y")
+# Interpolação para a inflação até o vencimento desejado
+if len(df_ipca_sorted) >= 2:
+    f_interp = interp1d(df_ipca_sorted["Vencimento_Num"], df_ipca_sorted["Taxa Compra Manha"], kind="linear", fill_value="extrapolate")
+    taxa_ipca_interpolada = f_interp(vencimento_input_num)
+    df_prefixado["Inflação Interpolada"] = ((1 + df_prefixado["Taxa Compra Manha"] / 100) /
+                                            (1 + taxa_ipca_interpolada / 100) - 1) * 100
+else:
+    df_prefixado["Inflação Interpolada"] = np.nan
 
-# Criar CSV para download contendo apenas os títulos utilizados (Prefixado e IPCA+)
-df_auditoria = df_filtered[df_filtered["Data Vencimento"].isin(df_prefixado["Data Vencimento"])]
-df_auditoria = pd.concat([df_auditoria, df_ipca[df_ipca["Data Vencimento"].isin(df_prefixado["Vencimento Mais Próximo"])]])
-csv_auditoria = df_auditoria.to_csv(index=False, sep=";", decimal=".")
+# Criar DataFrame final
+df_resultado = df_prefixado[[
+    "Data Base", "Tipo Titulo", "Data Vencimento", "Taxa Compra Manha", 
+    "Vencimento Mais Próximo", "Taxa IPCA Correspondente", "Inflação Implícita", "Inflação Interpolada"
+]].copy()
+
+df_resultado.rename(columns={
+    "Tipo Titulo": "Tipo Título",
+    "Taxa Compra Manha": "Taxa Prefixada Correspondente"
+}, inplace=True)
+
+# Criar arquivo Excel para download
+@st.cache_data(ttl=0)
+def convert_df_to_excel(df):
+    output = StringIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Resultado")
+    return output.getvalue()
+
+excel_data = convert_df_to_excel(df_resultado)
 
 # Exibir tabela no Streamlit
 st.subheader("📊 Resultado do Cálculo")
-st.dataframe(df_prefixado)
+st.dataframe(df_resultado)
 
-# Botão para download do CSV final
+# Botão para download do Excel final
 st.download_button(
-    label="📥 Baixar Resultado",
-    data=df_prefixado.to_csv(index=False, sep=";", decimal="."),
-    file_name="resultado_inflacao.csv",
-    mime="text/csv"
-)
-
-# Botão para download do CSV de auditoria (Apenas Prefixado e IPCA+)
-st.download_button(
-    label="📥 Baixar CSV Auditoria",
-    data=csv_auditoria,
-    file_name="dados_auditoria.csv",
-    mime="text/csv"
+    label="📥 Baixar Resultado (Excel)",
+    data=excel_data,
+    file_name="resultado_inflacao.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
