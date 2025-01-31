@@ -33,13 +33,7 @@ def load_treasury_data():
 # Carregar os dados
 df = load_treasury_data()
 
-# Botão para baixar o CSV original do Tesouro
-st.download_button(
-    label="📥 Baixar CSV Original do Tesouro",
-    data=requests.get(CSV_URL).content,
-    file_name="PrecoTaxaTesouroDireto.csv",
-    mime="text/csv"
-)
+
 
 # Seleção da data base
 min_date = df["Data Base"].min()
@@ -140,4 +134,11 @@ st.download_button(
     data=excel_data,
     file_name="resultado_inflacao.xlsx",
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+# Botão para baixar o CSV original do Tesouro
+st.download_button(
+    label="📥 Baixar CSV Original do Tesouro",
+    data=requests.get(CSV_URL).content,
+    file_name="PrecoTaxaTesouroDireto.csv",
+    mime="text/csv"
 )
