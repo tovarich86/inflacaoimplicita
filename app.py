@@ -5,34 +5,17 @@ from io import BytesIO, StringIO
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.spatial import cKDTree
-import matplotlib.pyplot as plt
-
-# Criar a imagem da fórmula da Inflação Implícita na memória
-def generate_formula_image():
-    fig, ax = plt.subplots(figsize=(8, 3))
-    ax.text(0.5, 0.5, 
-            r"$\mathrm{Inflação\ Implícita} = \left(\frac{1 + \mathrm{Taxa\ Prefixada}}{1 + \mathrm{Taxa\ IPCA}}\right) - 1$",
-            fontsize=18, ha='center', va='center')
-
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_frame_on(False)
-
-    # Salvar a imagem em um buffer de memória
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight', transparent=True)
-    plt.close(fig)
-    img_buffer.seek(0)  # Retorna ao início do buffer para leitura
-    return img_buffer
-
-# Gerar a imagem da fórmula
-formula_image_buffer = generate_formula_image()
 
 # Interface no Streamlit
 st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
 
-# **🔹 Exibir a imagem corretamente no Streamlit**
-st.image(formula_image_buffer, caption="Fórmula do Cálculo da Inflação Implícita", use_column_width=True)
+# 📌 **Fórmula da Inflação Implícita**
+st.markdown("""
+### 🧮 Fórmula da Inflação Implícita:
+\[
+\text{Inflação Implícita} = \left( \frac{1 + \text{Taxa Prefixada}}{1 + \text{Taxa IPCA}} \right) - 1
+\]
+""", unsafe_allow_html=True)
 
 # URL do CSV original do Tesouro Nacional
 CSV_URL = "https://www.tesourotransparente.gov.br/ckan/dataset/df56aa42-484a-4a59-8184-7676580c81e3/resource/796d2059-14e9-44e3-80c9-2d9e30b405c1/download/PrecoTaxaTesouroDireto.csv"
