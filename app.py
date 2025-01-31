@@ -31,12 +31,6 @@ def load_treasury_data():
 # Carregar os dados
 df = load_treasury_data()
 
-# Interface no Streamlit
-st.title("📊 Cálculo da Inflação Implícita - Tesouro Direto")
-
-# Exibir a imagem da fórmula
-st.image(formula_image_path, caption="Fórmula do Cálculo da Inflação Implícita", use_column_width=True)
-
 # Botão para baixar o CSV original do Tesouro
 st.download_button(
     label="📥 Baixar CSV Original do Tesouro",
